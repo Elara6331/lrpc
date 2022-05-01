@@ -10,10 +10,10 @@ type Request struct {
 
 // Response represents a response returned by the server
 type Response struct {
-	ID        string
+	ID          string
 	ChannelDone bool
-	IsChannel bool
-	IsError   bool
-	Error     string
-	Return    any
+	IsChannel   bool
+	IsError     bool
+	Error       string
+	Return      any
 }
