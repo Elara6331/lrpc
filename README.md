@@ -1,5 +1,7 @@
 # lrpc
 
+[![Go Reference](https://pkg.go.dev/badge/go.arsenm.dev/lrpc.svg)](https://pkg.go.dev/go.arsenm.dev/lrpc)
+
 A lightweight RPC framework that aims to be as easy to use as possible, while also being as lightweight as possible. Most current RPC frameworks are bloated to the point of adding 7MB to my binary, like RPCX. That is what prompted me to create this.
 
 ---

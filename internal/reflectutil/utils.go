@@ -71,8 +71,8 @@ func Convert(in reflect.Value, toType reflect.Type) (reflect.Value, error) {
 	// If input is a slice of any, and output is an array or slice
 	if in.Type() == reflect.TypeOf([]any{}) &&
 		to.Kind() == reflect.Slice || to.Kind() == reflect.Array {
-			// Use ConvertSlice to convert value
-			to.Set(reflect.ValueOf(ConvertSlice(
+		// Use ConvertSlice to convert value
+		to.Set(reflect.ValueOf(ConvertSlice(
 			in.Interface().([]any),
 			toType,
 		)))

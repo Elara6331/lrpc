@@ -12,7 +12,7 @@ type Request struct {
 type Response struct {
 	ID        string
 	IsChannel bool
-	IsError bool
+	IsError   bool
 	Error     string
 	Return    any
 }
