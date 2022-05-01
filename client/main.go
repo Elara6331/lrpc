@@ -144,7 +144,7 @@ func (c *Client) Call(ctx context.Context, rcvr, method string, arg interface{},
 					{Dir: reflect.SelectRecv, Chan: ctxDoneVal, Send: reflect.Value{}},
 				})
 				if chosen == 1 {
-					c.Call(context.Background(), "lrpc", "ChannelDone", id, nil)
+					c.Call(context.Background(), "lrpc", "ChannelDone", chID, nil)
 					// Close and delete channel
 					c.chMtx.Lock()
 					close(c.chs[chID])
