@@ -124,12 +124,11 @@ func (s *Server) execute(typ string, name string, arg any, c codec.Codec) (a any
 	argVal := reflect.ValueOf(arg)
 	// If argument's type does not match method's argument type
 	if arg != nil && argVal.Type() != mtdType.In(1) {
-		// If it is possible to convert the arg to desired type
-		if argVal.CanConvert(mtdType.In(1)) {
-			// Convert and set arg to result
-			arg = argVal.Convert(mtdType.In(1)).Interface()
+		val, err = reflectutil.Convert(argVal, mtdType.In(1))
+		if err != nil {
+			return nil, nil, err
 		}
-		//TODO: Invalid value err
+		arg = val.Interface()
 	}
 
 	// Create new context
