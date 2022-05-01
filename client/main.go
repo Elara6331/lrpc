@@ -106,6 +106,7 @@ func (c *Client) Call(rcvr, method string, arg interface{}, ret interface{}) err
 		c.chs[chID] = make(chan *types.Response, 5)
 		c.chMtx.Unlock()
 
+		channelClosed := false
 		go func() {
 			// Get type of channel elements
 			chElemType := retVal.Type().Elem()
@@ -120,6 +121,8 @@ func (c *Client) Call(rcvr, method string, arg interface{}, ret interface{}) err
 
 					// Close return channel
 					retVal.Close()
+
+					channelClosed = true
 
 					break
 				}
@@ -148,12 +151,14 @@ func (c *Client) Call(rcvr, method string, arg interface{}, ret interface{}) err
 					break
 				}
 			}
-			c.Call("lrpc", "ChannelDone", id, nil)
-			// Close and delete channel
-			c.chMtx.Lock()
-			close(c.chs[chID])
-			delete(c.chs, chID)
-			c.chMtx.Unlock()
+			if !channelClosed {
+				c.Call("lrpc", "ChannelDone", id, nil)
+				// Close and delete channel
+				c.chMtx.Lock()
+				close(c.chs[chID])
+				delete(c.chs, chID)
+				c.chMtx.Unlock()
+			}
 		}()
 	} else {
 		// IF return value is not a pointer, return error
