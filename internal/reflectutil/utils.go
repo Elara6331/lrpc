@@ -72,10 +72,10 @@ func Convert(in reflect.Value, toType reflect.Type) (reflect.Value, error) {
 	if in.Type() == reflect.TypeOf([]any{}) &&
 		to.Kind() == reflect.Slice || to.Kind() == reflect.Array {
 		// Use ConvertSlice to convert value
-		to.Set(reflect.ValueOf(ConvertSlice(
+		return reflect.ValueOf(ConvertSlice(
 			in.Interface().([]any),
 			toType,
-		)))
+		)), nil
 	}
 
 	return to, fmt.Errorf("cannot convert %s to %s", inType, toType)
@@ -104,13 +104,12 @@ func ConvertSlice(in []any, to reflect.Type) any {
 				// Set output value to input value
 				outVal.Set(inVal)
 			} else {
-				// If input value can be converted to output type
-				if inVal.CanConvert(outType) {
-					// Convert and set output value to input value
-					outVal.Set(inVal.Convert(outType))
-				} else {
+				newVal, err := Convert(inVal, outType)
+				if err != nil {
 					// Set output value to its zero value
 					outVal.Set(reflect.Zero(outVal.Type()))
+				} else {
+					outVal.Set(newVal)
 				}
 			}
 
