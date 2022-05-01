@@ -111,6 +111,18 @@ func (c *Client) Call(rcvr, method string, arg interface{}, ret interface{}) err
 			chElemType := retVal.Type().Elem()
 			// For every value received from channel
 			for val := range c.chs[chID] {
+				if val.ChannelDone {
+					// Close and delete channel
+					c.chMtx.Lock()
+					close(c.chs[chID])
+					delete(c.chs, chID)
+					c.chMtx.Unlock()
+
+					// Close return channel
+					retVal.Close()
+
+					break
+				}
 				// Get reflect value from channel response
 				rVal := reflect.ValueOf(val.Return)
 
@@ -124,24 +136,24 @@ func (c *Client) Call(rcvr, method string, arg interface{}, ret interface{}) err
 					rVal = newVal
 				}
 
-				// Try to read from the channel
-				recvVal, ok := retVal.TryRecv()
-				// IF the channel cannot be read but the value is valid,
-				// the channel must be closed
-				if !ok && recvVal.IsValid() {
-					// Send done signal
-					c.Call("lrpc", "ChannelDone", idStr, nil)
-					// Close and delete channel
-					c.chMtx.Lock()
-					close(c.chs[chID])
-					delete(c.chs, chID)
-					c.chMtx.Unlock()
-					break
-				}
-
 				// Send value to channel
 				retVal.Send(rVal)
 			}
+		}()
+
+		go func() {
+			for {
+				val, ok := retVal.Recv()
+				if !ok && val.IsValid() {
+					break
+				}
+			}
+			c.Call("lrpc", "ChannelDone", id, nil)
+			// Close and delete channel
+			c.chMtx.Lock()
+			close(c.chs[chID])
+			delete(c.chs, chID)
+			c.chMtx.Unlock()
 		}()
 	} else {
 		// IF return value is not a pointer, return error

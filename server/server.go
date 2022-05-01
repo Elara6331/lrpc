@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"io"
 	"net"
 	"reflect"
 	"sync"
@@ -243,7 +244,9 @@ func (s *Server) handleConn(c codec.Codec) {
 		var call types.Request
 		// Read request using codec
 		err := c.Decode(&call)
-		if err != nil {
+		if err == io.EOF {
+			break
+		} else if err != nil {
 			s.sendErr(c, call, nil, err)
 			continue
 		}
@@ -285,6 +288,18 @@ func (s *Server) handleConn(c codec.Codec) {
 							Return: val,
 						})
 					}
+
+					// Cancel context
+					ctx.Cancel()
+					// Delete context from map
+					s.contextsMtx.Lock()
+					delete(s.contexts, ctx.channelID)
+					s.contextsMtx.Unlock()
+
+					c.Encode(types.Response{
+						ID:          ctx.channelID,
+						ChannelDone: true,
+					})
 				}()
 			}
 
@@ -321,5 +336,7 @@ func (l lrpc) ChannelDone(_ *Context, id string) {
 	// Cancel context
 	ctx.Cancel()
 	// Delete context from map
+	l.srv.contextsMtx.Lock()
 	delete(l.srv.contexts, id)
+	l.srv.contextsMtx.Unlock()
 }
