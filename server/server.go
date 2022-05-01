@@ -62,7 +62,7 @@ func (s *Server) Register(v any) error {
 	// create variable to store name of v
 	var name string
 	switch kind {
-	case reflect.Pointer:
+	case reflect.Ptr:
 		// If v is a pointer, get the name of the underlying type
 		name = val.Elem().Type().Name()
 	case reflect.Struct:

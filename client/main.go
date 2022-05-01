@@ -145,7 +145,7 @@ func (c *Client) Call(rcvr, method string, arg interface{}, ret interface{}) err
 		}()
 	} else {
 		// IF return value is not a pointer, return error
-		if retVal.Kind() != reflect.Pointer {
+		if retVal.Kind() != reflect.Ptr {
 			return ErrReturnNotPointer
 		}
 

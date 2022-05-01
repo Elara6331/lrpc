@@ -27,7 +27,7 @@ func Convert(in reflect.Value, toType reflect.Type) (reflect.Value, error) {
 	to := reflect.New(toType).Elem()
 
 	// If type is a pointer
-	if to.Kind() == reflect.Pointer {
+	if to.Kind() == reflect.Ptr {
 		// Initialize value
 		to.Set(reflect.New(to.Type().Elem()))
 	}
