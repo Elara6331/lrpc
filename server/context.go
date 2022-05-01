@@ -47,7 +47,4 @@ func (ctx *Context) Done() <-chan struct{} {
 // Cancel cancels the context
 func (ctx *Context) Cancel() {
 	close(ctx.doneCh)
-	if ctx.channel != nil {
-		close(ctx.channel)
-	}
 }
