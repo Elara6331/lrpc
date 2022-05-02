@@ -22,12 +22,14 @@ import (
 	"errors"
 	"io"
 	"net"
+	"net/http"
 	"reflect"
 	"sync"
 
 	"go.arsenm.dev/lrpc/codec"
 	"go.arsenm.dev/lrpc/internal/reflectutil"
 	"go.arsenm.dev/lrpc/internal/types"
+	"golang.org/x/net/websocket"
 )
 
 // <= go1.17 compatibility
@@ -254,6 +256,20 @@ func (s *Server) Serve(ln net.Listener, cf codec.CodecFunc) {
 		// Handle connection
 		go s.handleConn(c)
 	}
+}
+
+func (s *Server) ServeWS(addr string, cf codec.CodecFunc) (err error) {
+	ws := websocket.Server{}
+
+	ws.Config = websocket.Config{
+		Version: websocket.ProtocolVersionHybi13,
+	}
+
+	ws.Handler = func(c *websocket.Conn) {
+		s.handleConn(cf(c))
+	}
+
+	return http.ListenAndServe(addr, http.HandlerFunc(ws.ServeHTTP))
 }
 
 // handleConn handles a listener connection
