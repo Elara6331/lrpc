@@ -258,17 +258,23 @@ func (s *Server) Serve(ln net.Listener, cf codec.CodecFunc) {
 	}
 }
 
+// ServeWS starts a server using WebSocket. This may be useful for
+// clients written in other languages, such as JS for a browser.
 func (s *Server) ServeWS(addr string, cf codec.CodecFunc) (err error) {
+	// Create new WebSocket server
 	ws := websocket.Server{}
 
+	// Create new WebSocket config
 	ws.Config = websocket.Config{
 		Version: websocket.ProtocolVersionHybi13,
 	}
 
+	// Set server handler
 	ws.Handler = func(c *websocket.Conn) {
 		s.handleConn(cf(c))
 	}
 
+	// Listen and serve on given address
 	return http.ListenAndServe(addr, http.HandlerFunc(ws.ServeHTTP))
 }
 
