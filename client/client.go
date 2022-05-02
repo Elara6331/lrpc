@@ -21,7 +21,7 @@ package client
 import (
 	"context"
 	"errors"
-	"net"
+	"io"
 	"reflect"
 	"sync"
 
@@ -44,7 +44,7 @@ var (
 
 // Client is an lrpc client
 type Client struct {
-	conn  net.Conn
+	conn  io.ReadWriteCloser
 	codec codec.Codec
 
 	chMtx sync.Mutex
@@ -52,7 +52,7 @@ type Client struct {
 }
 
 // New creates and returns a new client
-func New(conn net.Conn, cf codec.CodecFunc) *Client {
+func New(conn io.ReadWriteCloser, cf codec.CodecFunc) *Client {
 	out := &Client{
 		conn:  conn,
 		codec: cf(conn),
