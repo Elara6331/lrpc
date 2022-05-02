@@ -15,6 +15,6 @@ This RPC framework supports creating channels to transfer data from server to cl
 
 ### Codec
 
-When creating a server or client, a `CodecFunc` can be provided. This `CodecFunc` is provided with an `io.ReadWriter` and returns a `Codec`, which is an interface that contains encode and decode functions with the same signature ad `json.Decoder.Decode()` and `json.Encoder.Encode()`.
+When creating a server or client, a `CodecFunc` can be provided. An `io.ReadWriter` is passed into the `CodecFunc` and it returns a `Codec`, which is an interface that contains encode and decode functions with the same signature as `json.Decoder.Decode()` and `json.Encoder.Encode()`.
 
 This allows any codec to be used for the transfer of the data, making it easy to create clients in different languages.
