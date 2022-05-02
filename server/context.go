@@ -19,6 +19,9 @@
 package server
 
 import (
+	"context"
+	"time"
+
 	"go.arsenm.dev/lrpc/codec"
 
 	"github.com/gofrs/uuid"
@@ -32,7 +35,8 @@ type Context struct {
 
 	codec codec.Codec
 
-	doneCh chan struct{}
+	doneCh   chan struct{}
+	canceled bool
 }
 
 // MakeChannel changes the function it's called in into a
@@ -55,6 +59,26 @@ func (ctx *Context) GetCodec() codec.Codec {
 	return ctx.codec
 }
 
+// Deadline always returns the current time and false
+// as this context does not support deadlines
+func (ctx *Context) Deadline() (time.Time, bool) {
+	return time.Now(), false
+}
+
+// Value always returns nil as this context stores no values
+func (ctx *Context) Value(_ any) any {
+	return nil
+}
+
+// Err returns context.Canceled if the context was canceled,
+// otherwise nil
+func (ctx *Context) Err() error {
+	if ctx.canceled {
+		return context.Canceled
+	}
+	return nil
+}
+
 // Done returns a channel that will be closed when
 // the context is canceled, such as when ChannelDone
 // is called by the client
@@ -64,5 +88,6 @@ func (ctx *Context) Done() <-chan struct{} {
 
 // Cancel cancels the context
 func (ctx *Context) Cancel() {
+	ctx.canceled = true
 	close(ctx.doneCh)
 }
