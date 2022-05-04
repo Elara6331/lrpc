@@ -47,7 +47,7 @@ type Client struct {
 	conn  io.ReadWriteCloser
 	codec codec.Codec
 
-	chMtx sync.Mutex
+	chMtx *sync.Mutex
 	chs   map[string]chan *types.Response
 }
 
@@ -57,6 +57,7 @@ func New(conn io.ReadWriteCloser, cf codec.CodecFunc) *Client {
 		conn:  conn,
 		codec: cf(conn),
 		chs:   map[string]chan *types.Response{},
+		chMtx: &sync.Mutex{},
 	}
 
 	go out.handleConn()
@@ -92,7 +93,10 @@ func (c *Client) Call(ctx context.Context, rcvr, method string, arg interface{},
 	}
 
 	// Get response from channel
-	resp := <-c.chs[idStr]
+	c.chMtx.Lock()
+	respCh := c.chs[idStr]
+	c.chMtx.Unlock()
+	resp := <-respCh
 
 	// Close and delete channel
 	c.chMtx.Lock()
@@ -210,11 +214,14 @@ func (c *Client) handleConn() {
 			continue
 		}
 
+		c.chMtx.Lock()
 		// Get channel from map, skip if it doesn't exist
 		ch, ok := c.chs[resp.ID]
 		if !ok {
+			c.chMtx.Unlock()
 			continue
 		}
+		c.chMtx.Unlock()
 
 		// Send response to channel
 		ch <- resp

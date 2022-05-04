@@ -280,6 +280,8 @@ func (s *Server) ServeWS(addr string, cf codec.CodecFunc) (err error) {
 
 // handleConn handles a listener connection
 func (s *Server) handleConn(c codec.Codec) {
+	codecMtx := &sync.Mutex{}
+
 	for {
 		var call types.Request
 		// Read request using codec
@@ -322,11 +324,13 @@ func (s *Server) handleConn(c codec.Codec) {
 				go func() {
 					// For every value received from channel
 					for val := range ctx.channel {
+						codecMtx.Lock()
 						// Encode response using codec
 						c.Encode(types.Response{
 							ID:     ctx.channelID,
 							Return: val,
 						})
+						codecMtx.Unlock()
 					}
 
 					// Cancel context
@@ -336,15 +340,19 @@ func (s *Server) handleConn(c codec.Codec) {
 					delete(s.contexts, ctx.channelID)
 					s.contextsMtx.Unlock()
 
+					codecMtx.Lock()
 					c.Encode(types.Response{
 						ID:          ctx.channelID,
 						ChannelDone: true,
 					})
+					codecMtx.Unlock()
 				}()
 			}
 
 			// Encode response using codec
+			codecMtx.Lock()
 			c.Encode(res)
+			codecMtx.Unlock()
 		}
 	}
 }
