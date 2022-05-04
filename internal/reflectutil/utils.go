@@ -36,6 +36,18 @@ func Convert(in reflect.Value, toType reflect.Type) (reflect.Value, error) {
 		return in, nil
 	}
 
+	// If the output type is a pointer to the input type
+	if reflect.PtrTo(inType) == toType {
+		// Return pointer to input
+		return in.Addr(), nil
+	}
+
+	// If input is a pointer pointing to the output type
+	if inType.Kind() == reflect.Ptr && inType.Elem() == toType {
+		// Return value being pointed at by input
+		return reflect.Indirect(in), nil
+	}
+
 	// If input can be converted to desired type, convert and return
 	if in.CanConvert(toType) {
 		return in.Convert(toType), nil
