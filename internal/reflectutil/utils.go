@@ -38,8 +38,14 @@ func Convert(in reflect.Value, toType reflect.Type) (reflect.Value, error) {
 
 	// If the output type is a pointer to the input type
 	if reflect.PtrTo(inType) == toType {
-		// Return pointer to input
-		return in.Addr(), nil
+		if in.CanAddr() {
+			// Return pointer to input
+			return in.Addr(), nil
+		}
+
+		inPtrVal := reflect.New(inType)
+		inPtrVal.Elem().Set(in)
+		return inPtrVal, nil
 	}
 
 	// If input is a pointer pointing to the output type
