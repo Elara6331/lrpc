@@ -18,6 +18,9 @@
 
 package types
 
+// <= go1.17 compatibility
+type any = interface{}
+
 // Request represents a request sent to the server
 type Request struct {
 	ID       string
@@ -29,15 +32,16 @@ type Request struct {
 type ResponseType uint8
 
 const (
-	ResponseTypeError ResponseType = iota
+	ResponseTypeNormal ResponseType = iota
+	ResponseTypeError
 	ResponseTypeChannel
 	ResponseTypeChannelDone
 )
 
 // Response represents a response returned by the server
 type Response struct {
-	Type ResponseType
-	ID          string
-	Error       string
-	Return      any
+	Type   ResponseType
+	ID     string
+	Error  string
+	Return any
 }

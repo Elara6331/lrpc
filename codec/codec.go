@@ -26,6 +26,9 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
+// <= go1.17 compatibility
+type any = interface{}
+
 // CodecFunc is a function that returns a new Codec
 // bound to the given io.ReadWriter
 type CodecFunc func(io.ReadWriter) Codec

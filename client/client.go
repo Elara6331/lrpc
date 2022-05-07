@@ -177,7 +177,7 @@ func (c *Client) Call(ctx context.Context, rcvr, method string, arg interface{},
 				}
 			}
 		}()
-	} else {
+	} else if resp.Type == types.ResponseTypeNormal {
 		// IF return value is not a pointer, return error
 		if retVal.Kind() != reflect.Ptr {
 			return ErrReturnNotPointer

@@ -26,6 +26,9 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+// <= go1.17 compatibility
+type any = interface{}
+
 // Convert attempts to convert the given value to the given type
 func Convert(in reflect.Value, toType reflect.Type) (reflect.Value, error) {
 	// Get input type
