@@ -105,7 +105,7 @@ func (c *Client) Call(ctx context.Context, rcvr, method string, arg interface{},
 	c.chMtx.Unlock()
 
 	// If response is an error, return error
-	if resp.IsError {
+	if resp.Type == types.ResponseTypeError {
 		return errors.New(resp.Error)
 	}
 
@@ -118,7 +118,7 @@ func (c *Client) Call(ctx context.Context, rcvr, method string, arg interface{},
 	retVal := reflect.ValueOf(ret)
 
 	// If response is a channel
-	if resp.IsChannel {
+	if resp.Type == types.ResponseTypeChannel {
 		// If return value is not a channel, return error
 		if retVal.Kind() != reflect.Chan {
 			return ErrReturnNotChannel
@@ -137,7 +137,7 @@ func (c *Client) Call(ctx context.Context, rcvr, method string, arg interface{},
 			// For every value received from channel
 			for val := range c.chs[chID] {
 				//s := time.Now()
-				if val.ChannelDone {
+				if val.Type == types.ResponseTypeChannelDone {
 					// Close and delete channel
 					c.chMtx.Lock()
 					close(c.chs[chID])

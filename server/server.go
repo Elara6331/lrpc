@@ -312,7 +312,7 @@ func (s *Server) handleConn(c codec.Codec) {
 			// If function has created a channel
 			if ctx.isChannel {
 				// Set IsChannel to true
-				res.IsChannel = true
+				res.Type = types.ResponseTypeChannel
 				// Overwrite return value with channel ID
 				res.Return = ctx.channelID
 
@@ -342,8 +342,8 @@ func (s *Server) handleConn(c codec.Codec) {
 
 					codecMtx.Lock()
 					c.Encode(types.Response{
-						ID:          ctx.channelID,
-						ChannelDone: true,
+						Type: types.ResponseTypeChannelDone,
+						ID:   ctx.channelID,
 					})
 					codecMtx.Unlock()
 				}()
@@ -361,10 +361,10 @@ func (s *Server) handleConn(c codec.Codec) {
 func (s *Server) sendErr(c codec.Codec, req types.Request, val any, err error) {
 	// Encode error response using codec
 	c.Encode(types.Response{
-		ID:      req.ID,
-		IsError: true,
-		Error:   err.Error(),
-		Return:  val,
+		Type:   types.ResponseTypeError,
+		ID:     req.ID,
+		Error:  err.Error(),
+		Return: val,
 	})
 }
 

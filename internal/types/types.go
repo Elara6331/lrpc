@@ -26,12 +26,18 @@ type Request struct {
 	Arg      any
 }
 
+type ResponseType uint8
+
+const (
+	ResponseTypeError ResponseType = iota
+	ResponseTypeChannel
+	ResponseTypeChannelDone
+)
+
 // Response represents a response returned by the server
 type Response struct {
+	Type ResponseType
 	ID          string
-	ChannelDone bool
-	IsChannel   bool
-	IsError     bool
 	Error       string
 	Return      any
 }
