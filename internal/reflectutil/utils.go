@@ -126,11 +126,11 @@ func ConvertSlice(in []any, to reflect.Type) any {
 	// Create new value for output
 	out := reflect.New(to).Elem()
 
+	// Get type of slice elements
+	outType := out.Type().Elem()
+
 	// If output value is a slice
 	if out.Kind() == reflect.Slice {
-		// Get type of slice elements
-		outType := out.Type().Elem()
-
 		// For every value provided
 		for i := 0; i < len(in); i++ {
 			// Get value of input type
@@ -170,13 +170,12 @@ func ConvertSlice(in []any, to reflect.Type) any {
 				// Set output value to input value
 				outVal.Set(inVal)
 			} else {
-				// If input value can be converted to output type
-				if inVal.CanConvert(outVal.Type()) {
-					// Convert and set output value to input value
-					outVal.Set(inVal.Convert(outVal.Type()))
-				} else {
+				newVal, err := Convert(inVal, outType)
+				if err != nil {
 					// Set output value to its zero value
 					outVal.Set(reflect.Zero(outVal.Type()))
+				} else {
+					outVal.Set(newVal)
 				}
 			}
 		}
