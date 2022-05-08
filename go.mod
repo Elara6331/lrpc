@@ -1,6 +1,6 @@
 module go.arsenm.dev/lrpc
 
-go 1.18
+go 1.17
 
 require (
 	github.com/gofrs/uuid v4.2.0+incompatible
