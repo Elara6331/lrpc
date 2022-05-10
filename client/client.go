@@ -128,7 +128,9 @@ func (c *Client) Call(ctx context.Context, rcvr, method string, arg interface{},
 
 		// Create new channel using channel ID
 		c.chMtx.Lock()
-		c.chs[chID] = make(chan *types.Response, 5)
+		if _, ok := c.chs[chID]; !ok {
+			c.chs[chID] = make(chan *types.Response, 5)
+		}
 		c.chMtx.Unlock()
 
 		go func() {
@@ -136,7 +138,6 @@ func (c *Client) Call(ctx context.Context, rcvr, method string, arg interface{},
 			chElemType := retVal.Type().Elem()
 			// For every value received from channel
 			for val := range c.chs[chID] {
-				//s := time.Now()
 				if val.Type == types.ResponseTypeChannelDone {
 					// Close and delete channel
 					c.chMtx.Lock()
@@ -215,11 +216,12 @@ func (c *Client) handleConn() {
 		}
 
 		c.chMtx.Lock()
-		// Get channel from map, skip if it doesn't exist
+		// Attempt to get channel from map
 		ch, ok := c.chs[resp.ID]
+		// If channel does not exist, make it
 		if !ok {
-			c.chMtx.Unlock()
-			continue
+			ch = make(chan *types.Response, 5)
+			c.chs[resp.ID] = ch
 		}
 		c.chMtx.Unlock()
 
