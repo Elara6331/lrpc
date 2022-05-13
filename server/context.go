@@ -84,8 +84,8 @@ func (ctx *Context) Deadline() (time.Time, bool) {
 }
 
 // Value always returns nil as this context stores no values
-func (ctx *Context) Value(_ any) any {
-	return nil
+func (ctx *Context) Value(key any) any {
+	return ctx.ctx.Value(key)
 }
 
 // Err returns context.Canceled if the context was canceled,
