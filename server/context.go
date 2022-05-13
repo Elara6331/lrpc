@@ -37,6 +37,24 @@ type Context struct {
 
 	doneCh   chan struct{}
 	canceled bool
+
+	ctx context.Context
+}
+
+func newContext(ctx context.Context, codec codec.Codec) *Context {
+	out := &Context{
+		doneCh: make(chan struct{}),
+		codec:  codec,
+		ctx:    ctx,
+	}
+	if ctx == nil {
+		out.ctx = context.Background()
+	}
+	go func() {
+		<-out.ctx.Done()
+		out.cancel()
+	}()
+	return out
 }
 
 // MakeChannel changes the function it's called in into a
@@ -87,7 +105,10 @@ func (ctx *Context) Done() <-chan struct{} {
 }
 
 // Cancel cancels the context
-func (ctx *Context) Cancel() {
+func (ctx *Context) cancel() {
+	if ctx.canceled {
+		return
+	}
 	ctx.canceled = true
 	close(ctx.doneCh)
 }

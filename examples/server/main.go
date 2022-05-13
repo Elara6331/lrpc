@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/gob"
 	"net"
 
@@ -33,5 +34,5 @@ func main() {
 	s.Register(Arith{})
 
 	ln, _ := net.Listen("tcp", ":9090")
-	s.Serve(ln, codec.Gob)
+	s.Serve(context.Background(), ln, codec.Gob)
 }
