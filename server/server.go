@@ -278,7 +278,14 @@ func (s *Server) ServeWS(ctx context.Context, addr string, cf codec.CodecFunc) (
 	return server.ListenAndServe()
 }
 
-// handleConn handles a listener connection
+// ServeConn uses the provided connection to serve the client.
+// This may be useful if something other than a net.Listener
+// needs to be used
+func (s *Server) ServeConn(ctx context.Context, conn io.ReadWriter, cf codec.CodecFunc) {
+	s.handleConn(ctx, cf(conn))
+}
+
+// handleConn handles a connection
 func (s *Server) handleConn(pCtx context.Context, c codec.Codec) {
 	codecMtx := &sync.Mutex{}
 
