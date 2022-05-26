@@ -37,10 +37,11 @@ import (
 type any = interface{}
 
 var (
-	ErrInvalidType    = errors.New("type must be struct or pointer to struct")
-	ErrNoSuchReceiver = errors.New("no such receiver registered")
-	ErrNoSuchMethod   = errors.New("no such method was found")
-	ErrInvalidMethod  = errors.New("method invalid for lrpc call")
+	ErrInvalidType        = errors.New("type must be struct or pointer to struct")
+	ErrNoSuchReceiver     = errors.New("no such receiver registered")
+	ErrNoSuchMethod       = errors.New("no such method was found")
+	ErrInvalidMethod      = errors.New("method invalid for lrpc call")
+	ErrUnexpectedArgument = errors.New("argument provided but the function does not accept any arguments")
 )
 
 // Server is an lrpc server
@@ -120,7 +121,10 @@ func (s *Server) execute(pCtx context.Context, typ string, name string, arg any,
 	// Get method type
 	mtdType := mtd.Type()
 
-	//TODO: if arg not nil but fn has no arg, err
+	// Return error if argument provided but isn't expected
+	if mtdType.NumIn() == 1 && arg != nil {
+		return nil, nil, ErrUnexpectedArgument
+	}
 
 	// IF argument is []any
 	anySlice, ok := arg.([]any)
