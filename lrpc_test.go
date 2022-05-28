@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"net"
 	"testing"
+	"time"
 
 	"go.arsenm.dev/lrpc/client"
 	"go.arsenm.dev/lrpc/codec"
@@ -131,4 +132,80 @@ func TestCodecs(t *testing.T) {
 	testCodec(codec.Msgpack, "msgpack")
 	testCodec(codec.JSON, "json")
 	testCodec(codec.Gob, "gob")
+}
+
+type Channel struct{}
+
+func (Channel) Time(ctx *server.Context, interval time.Duration) error {
+	ch, err := ctx.MakeChannel()
+	if err != nil {
+		return err
+	}
+
+	tick := time.NewTicker(interval)
+	go func() {
+		for {
+			select {
+			case t := <-tick.C:
+				ch <- t
+			case <-ctx.Done():
+				close(ch)
+				return
+			}
+		}
+	}()
+
+	return nil
+}
+
+func TestChannel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Create new network pipe
+	sConn, cConn := net.Pipe()
+
+	s := server.New()
+	defer s.Close()
+	// Register Arith for RPC
+	s.Register(Channel{})
+	// Serve the pipe connection using default codec
+	go s.ServeConn(ctx, sConn, codec.Default)
+
+	// Create new client using default codec
+	c := client.New(cConn, codec.Default)
+	defer c.Close()
+
+	timeCtx, timeCancel := context.WithCancel(ctx)
+	defer timeCancel()
+
+	timeCh := make(chan *time.Time, 2)
+	err := c.Call(timeCtx, "Channel", "Time", time.Millisecond, timeCh)
+	if err != nil {
+		t.Error(err)
+	}
+
+	var loops int
+	var lastTime *time.Time
+	for curTime := range timeCh {
+		if loops > 3 {
+			timeCancel()
+			break
+		}
+
+		if lastTime == nil {
+			lastTime = curTime
+			continue
+		}
+
+		diff := curTime.Sub(*lastTime)
+		diff = diff.Round(time.Millisecond)
+
+		if diff != time.Millisecond {
+			t.Fatalf("expected 1s diff, got %s", diff)
+		}
+
+		lastTime = curTime
+		loops++
+	}
 }
