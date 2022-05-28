@@ -149,6 +149,7 @@ func (Channel) Time(ctx *server.Context, interval time.Duration) error {
 			case t := <-tick.C:
 				ch <- t
 			case <-ctx.Done():
+				tick.Stop()
 				close(ch)
 				return
 			}
