@@ -42,6 +42,7 @@ var (
 	ErrNoSuchMethod       = errors.New("no such method was found")
 	ErrInvalidMethod      = errors.New("method invalid for lrpc call")
 	ErrUnexpectedArgument = errors.New("argument provided but the function does not accept any arguments")
+	ErrArgNotProvided     = errors.New("method expected an argument, but none was provided")
 )
 
 // Server is an lrpc server
@@ -152,6 +153,9 @@ func (s *Server) execute(pCtx context.Context, typ string, name string, arg any,
 	switch mtdType.NumOut() {
 	case 0: // If method has no return values
 		if mtdType.NumIn() == 2 {
+			if arg == nil {
+				return nil, nil, ErrArgNotProvided
+			}
 			// Call method with arg, ignore returned value
 			mtd.Call([]reflect.Value{ctxVal, reflect.ValueOf(arg)})
 		} else {
@@ -160,6 +164,10 @@ func (s *Server) execute(pCtx context.Context, typ string, name string, arg any,
 		}
 	case 1: // If method has one return value
 		if mtdType.NumIn() == 2 {
+			if arg == nil {
+				return nil, nil, ErrArgNotProvided
+			}
+
 			// Call method with arg, get returned values
 			out := mtd.Call([]reflect.Value{ctxVal, reflect.ValueOf(arg)})
 
@@ -194,6 +202,10 @@ func (s *Server) execute(pCtx context.Context, typ string, name string, arg any,
 		}
 	case 2: // If method has two return values
 		if mtdType.NumIn() == 2 {
+			if arg == nil {
+				return nil, nil, ErrArgNotProvided
+			}
+
 			// Call method with arg and get returned values
 			out := mtd.Call([]reflect.Value{ctxVal, reflect.ValueOf(arg)})
 
