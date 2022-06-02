@@ -104,12 +104,14 @@ func Convert(in reflect.Value, toType reflect.Type) (reflect.Value, error) {
 		err := mapstructure.Decode(in.Interface(), to.Addr().Interface())
 		if err == nil {
 			return to, nil
+		} else {
+			return reflect.Value{}, err
 		}
 	}
 
 	// If input is a slice of any, and output is an array or slice
 	if in.Type() == reflect.TypeOf([]any{}) &&
-		to.Kind() == reflect.Slice || to.Kind() == reflect.Array {
+		(to.Kind() == reflect.Slice || to.Kind() == reflect.Array) {
 		// Use ConvertSlice to convert value
 		return reflect.ValueOf(ConvertSlice(
 			in.Interface().([]any),
