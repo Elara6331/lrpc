@@ -3,4 +3,8 @@
 require 'ruby2js'
 require 'ruby2js/filter/functions'
 
-puts Ruby2JS.convert(File.read('lrpc.rb'), eslevel: 2016)
+puts Ruby2JS.convert(
+    File.read('lrpc.rb'),
+    eslevel: 2016,
+    exclude: [:delete],
+)
