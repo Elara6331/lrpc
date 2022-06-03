@@ -145,6 +145,7 @@ class LRPCChannel
   # close closes the channel. This should not be called by the
   # consumer of the channel. Use done() instead.
   def close()
+    return if @closed
     fn = @onClose
     fn()
     @closed = true
