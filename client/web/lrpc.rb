@@ -67,10 +67,10 @@ class LRPCClient
       @callMap.delete(val.ID) unless fns.isChannel
     end
   end
-  
+
   # call calls a method on the server with the given
   # argument and returns a promise.
-  def call(rcvr, method, arg)
+  def callMethod(rcvr, method, arg)
     return Promise.new do |resolve, reject|
       # Get random UUID (this only works with TLS)
       id = crypto.randomUUID()
@@ -119,7 +119,7 @@ class LRPCChannel
   # done cancels the context corresponding to the channel
   # on the server side and closes the channel.
   def done()
-    @client.call("lrpc", "ChannelDone", @id)
+    @client.callMethod("lrpc", "ChannelDone", @id)
     self.close()
     @client._callMap.delete(@id)
   end
