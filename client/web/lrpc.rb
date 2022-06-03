@@ -100,7 +100,6 @@ class LRPCChannel
     # Set self variables
     @client = client
     @id = id
-    @arr = []
     # Set function variables to no-ops
     @onMessage = proc {|fn|}
     @onClose = proc {}
@@ -113,7 +112,6 @@ class LRPCChannel
   # send sends a value on the channel. This should not
   # be called by the consumer of the channel.
   def send(val)
-    @arr.push(val)
     fn = @onMessage
     fn(val)
   end
