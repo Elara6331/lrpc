@@ -100,6 +100,7 @@ class LRPCChannel
     # Set self variables
     @client = client
     @id = id
+    @closed = false
     # Set function variables to no-ops
     @onMessage = proc {|fn|}
     @onClose = proc {}
@@ -112,6 +113,7 @@ class LRPCChannel
   # send sends a value on the channel. This should not
   # be called by the consumer of the channel.
   def send(val)
+    return if @closed
     fn = @onMessage
     fn(val)
   end
@@ -119,6 +121,7 @@ class LRPCChannel
   # done cancels the context corresponding to the channel
   # on the server side and closes the channel.
   def done()
+    return if @closed
     @client.callMethod("lrpc", "ChannelDone", @id)
     self.close()
     @client._callMap.delete(@id)
@@ -144,5 +147,6 @@ class LRPCChannel
   def close()
     fn = @onClose
     fn()
+    @closed = true
   end
 end
