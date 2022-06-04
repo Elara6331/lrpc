@@ -92,6 +92,27 @@ class LRPCClient
       @conn.send(data.buffer)
     end
   end
+
+  # getClient returns an object containing functions
+  # corresponding to registered functions on the given
+  # receiver. It uses the lrpc.Introspect() endpoint
+  # to achieve this.
+  def getObject(rcvr)
+    return Promise.new do |resolve|
+      # Introspect methods on given receiver
+      self.callMethod("lrpc", "Introspect", rcvr).then do |methodDesc|
+        # Create output object
+        out = {}
+        # For each method in description array
+        methodDesc.each do |method|
+          # Create and assign new function to call current method
+          out[method.Name] = proc { |arg| return self.callMethod(rcvr, method.Name, arg) }
+        end
+        # Resolve promise with output promise
+        resolve(out)
+      end
+    end
+  end
 end
 
 # LRPCChannel represents a channel used for lrpc.
