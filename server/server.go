@@ -130,9 +130,8 @@ func (s *Server) execute(pCtx context.Context, typ string, name string, data []b
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	arg = argVal.Elem().Interface()
-	
 
 	ctx = newContext(pCtx, c)
 	// Get reflect value of context
@@ -304,87 +303,90 @@ func (s *Server) handleConn(pCtx context.Context, c codec.Codec) {
 			continue
 		}
 
-		// Execute decoded call
-		val, ctx, err := s.execute(
-			pCtx,
-			call.Receiver,
-			call.Method,
-			call.Arg,
-			c,
-		)
-		if err != nil {
-			s.sendErr(c, call, val, err)
-		} else {
-			valData, err := c.Marshal(val)
+		go func() {
+			// Execute decoded call
+			val, ctx, err := s.execute(
+				pCtx,
+				call.Receiver,
+				call.Method,
+				call.Arg,
+				c,
+			)
 			if err != nil {
 				s.sendErr(c, call, val, err)
-				continue
-			}
-
-			// Create response
-			res := types.Response{
-				ID:     call.ID,
-				Return: valData,
-			}
-
-			// If function has created a channel
-			if ctx.isChannel {
-				idData, err := c.Marshal(ctx.channelID)
+			} else {
+				valData, err := c.Marshal(val)
 				if err != nil {
 					s.sendErr(c, call, val, err)
-					continue
+					return
 				}
 
-				// Set IsChannel to true
-				res.Type = types.ResponseTypeChannel
-				// Overwrite return value with channel ID
-				res.Return = idData
+				// Create response
+				res := types.Response{
+					ID:     call.ID,
+					Return: valData,
+				}
 
-				// Store context in map for future use
-				s.contextsMtx.Lock()
-				s.contexts[ctx.channelID] = ctx
-				s.contextsMtx.Unlock()
-
-				go func() {
-					// For every value received from channel
-					for val := range ctx.channel {
-						codecMtx.Lock()
-
-						valData, err := c.Marshal(val)
-						if err != nil {
-							continue
-						}
-
-						// Encode response using codec
-						c.Encode(types.Response{
-							ID:     ctx.channelID,
-							Return: valData,
-						})
-
-						codecMtx.Unlock()
+				// If function has created a channel
+				if ctx.isChannel {
+					idData, err := c.Marshal(ctx.channelID)
+					if err != nil {
+						s.sendErr(c, call, val, err)
+						return
 					}
 
-					// Cancel context
-					ctx.cancel()
-					// Delete context from map
+					// Set IsChannel to true
+					res.Type = types.ResponseTypeChannel
+					// Overwrite return value with channel ID
+					res.Return = idData
+
+					// Store context in map for future use
 					s.contextsMtx.Lock()
-					delete(s.contexts, ctx.channelID)
+					s.contexts[ctx.channelID] = ctx
 					s.contextsMtx.Unlock()
 
-					codecMtx.Lock()
-					c.Encode(types.Response{
-						Type: types.ResponseTypeChannelDone,
-						ID:   ctx.channelID,
-					})
-					codecMtx.Unlock()
-				}()
+					go func() {
+						// For every value received from channel
+						for val := range ctx.channel {
+							codecMtx.Lock()
+
+							valData, err := c.Marshal(val)
+							if err != nil {
+								continue
+							}
+
+							// Encode response using codec
+							c.Encode(types.Response{
+								ID:     ctx.channelID,
+								Return: valData,
+							})
+
+							codecMtx.Unlock()
+						}
+
+						// Cancel context
+						ctx.cancel()
+						// Delete context from map
+						s.contextsMtx.Lock()
+						delete(s.contexts, ctx.channelID)
+						s.contextsMtx.Unlock()
+
+						codecMtx.Lock()
+						c.Encode(types.Response{
+							Type: types.ResponseTypeChannelDone,
+							ID:   ctx.channelID,
+						})
+						codecMtx.Unlock()
+					}()
+				}
+
+				// Encode response using codec
+				codecMtx.Lock()
+				c.Encode(res)
+				codecMtx.Unlock()
 			}
 
-			// Encode response using codec
-			codecMtx.Lock()
-			c.Encode(res)
-			codecMtx.Unlock()
-		}
+		}()
 	}
 }
 
