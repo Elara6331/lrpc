@@ -122,7 +122,7 @@ func TestCodecs(t *testing.T) {
 		if err != nil {
 			t.Errorf("codec/%s: %v", name, err)
 		}
-
+		
 		if add != 4 {
 			t.Errorf("codec/%s: add: expected 4, got %d", name, add)
 		}

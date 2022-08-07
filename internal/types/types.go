@@ -26,7 +26,7 @@ type Request struct {
 	ID       string
 	Receiver string
 	Method   string
-	Arg      any
+	Arg      []byte
 }
 
 type ResponseType uint8
@@ -43,5 +43,5 @@ type Response struct {
 	Type   ResponseType
 	ID     string
 	Error  string
-	Return any
+	Return []byte
 }

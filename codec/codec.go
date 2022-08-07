@@ -19,6 +19,7 @@
 package codec
 
 import (
+	"bytes"
 	"encoding/gob"
 	"encoding/json"
 	"io"
@@ -38,42 +39,76 @@ type CodecFunc func(io.ReadWriter) Codec
 type Codec interface {
 	Encode(val any) error
 	Decode(val any) error
+	Unmarshal(data []byte, v any) error
+	Marshal(v any) ([]byte, error)
 }
 
 // Default is the default CodecFunc
 var Default = Msgpack
 
+type JsonCodec struct {
+	*json.Encoder
+	*json.Decoder
+}
+
+func (JsonCodec) Unmarshal(data []byte, v any) error {
+	return json.Unmarshal(data, v)
+}
+
+func (JsonCodec) Marshal(v any) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // JSON is a CodecFunc that creates a JSON Codec
 func JSON(rw io.ReadWriter) Codec {
-	type jsonCodec struct {
-		*json.Encoder
-		*json.Decoder
-	}
-	return jsonCodec{
+	return JsonCodec{
 		Encoder: json.NewEncoder(rw),
 		Decoder: json.NewDecoder(rw),
 	}
 }
 
+type MsgpackCodec struct {
+	*msgpack.Encoder
+	*msgpack.Decoder
+}
+
+func (MsgpackCodec) Unmarshal(data []byte, v any) error {
+	return msgpack.Unmarshal(data, v)
+}
+
+func (MsgpackCodec) Marshal(v any) ([]byte, error) {
+	return msgpack.Marshal(v)
+}
+
 // Msgpack is a CodecFunc that creates a Msgpack Codec
 func Msgpack(rw io.ReadWriter) Codec {
-	type msgpackCodec struct {
-		*msgpack.Encoder
-		*msgpack.Decoder
-	}
-	return msgpackCodec{
+	return MsgpackCodec{
 		Encoder: msgpack.NewEncoder(rw),
 		Decoder: msgpack.NewDecoder(rw),
 	}
 }
 
+type GobCodec struct {
+	*gob.Encoder
+	*gob.Decoder
+}
+
+func (GobCodec) Unmarshal(data []byte, v any) error {
+	return gob.NewDecoder(bytes.NewReader(data)).Decode(v)
+}
+
+func (GobCodec) Marshal(v any) ([]byte, error) {
+	buf := &bytes.Buffer{}
+	err := gob.NewEncoder(buf).Encode(v)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
 // Gob is a CodecFunc that creates a Gob Codec
 func Gob(rw io.ReadWriter) Codec {
-	type gobCodec struct {
-		*gob.Encoder
-		*gob.Decoder
-	}
-	return gobCodec{
+	return GobCodec{
 		Encoder: gob.NewEncoder(rw),
 		Decoder: gob.NewDecoder(rw),
 	}
